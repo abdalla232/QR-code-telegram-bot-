@@ -80,20 +80,15 @@ def create_styled_qr(text, bot_name="QR Bot"):
 @dp.message(Command("start"))
 async def start(message: Message):
 
-    # زر التواصل
-    reply_keyboard = types.ReplyKeyboardMarkup(
+    keyboard = types.ReplyKeyboardMarkup(
         keyboard=[
             [
-                types.KeyboardButton(
-                    text="📞 تواصل معي",
-                    request_contact=True
-                )
+                types.KeyboardButton(text="📞 Contact")
             ]
         ],
         resize_keyboard=True
     )
 
-    # زر QR
     inline_keyboard = types.InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -107,7 +102,7 @@ async def start(message: Message):
 
     await message.answer(
         "👋 Welcome!",
-        reply_markup=reply_keyboard
+        reply_markup=keyboard
     )
 
     await message.answer(
@@ -117,16 +112,14 @@ async def start(message: Message):
 
 
 # ================= CONTACT =================
-@dp.message(F.contact)
-async def contact_handler(message: Message):
-
-    contact = message.contact
+@dp.message(F.text == "📞 Contact")
+async def contact_info(message: Message):
 
     await message.answer(
-        f"✅ Thanks {contact.first_name}!\n\n"
-        f"📩 للتواصل معي:\n"
-        f"Telegram: @YourUsername\n"
-        f"Email: yourmail@gmail.com"
+        "📞 Contact Information\n\n"
+        "Telegram: @Abdullah_id_en\n"
+        "Insta: 3bdullah.id.en\n"
+        "Phone: +963968713548"
     )
 
 

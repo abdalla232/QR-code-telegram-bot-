@@ -95,6 +95,11 @@ async def start(message: Message):
     await message.answer(
         "👋 Welcome!\nChoose an option:",
         reply_markup=keyboard
+       
+        @dp.message(F.text == "🎯 Generate QR Code")
+async def generate_qr_button(message: Message):
+
+    await message.answer("✍️ Send the text or link:")
     )
 
 # ================= CONTACT =================
@@ -111,38 +116,32 @@ async def contact_info(message: Message):
 
 
 # ================= GENERATE QR =================
-@dp.message(QRState.waiting_text)
-async def generate_qr(message: Message, state: FSMContext):
+@dp.message()
+async def generate_qr(message: Message):
 
-    if not message.text:
-        await message.answer(
-            "❌ Please send a valid text or link"
-        )
+    if message.text in ["🎯 Generate QR Code", "📞 Contact"]:
         return
 
     photo = create_styled_qr(
         text=message.text,
-        bot_name="QR Generator Bot"
+        bot_name="QR Bot"
     )
 
-    keyboard = types.InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                types.InlineKeyboardButton(
-                    text="🔁 Generate again",
-                    callback_data="qr"
-                )
-            ]
-        ]
+    await message.answer_photo(photo=photo)
+async def generate_qr(message: Message, state: FSMContext):
+
+    if not message.text:
+        await message.answer("❌ Send text only")
+        return
+
+    photo = create_styled_qr(
+        text=message.text,
+        bot_name="QR Bot"
     )
 
-    await message.answer_photo(
-        photo=photo,
-        reply_markup=keyboard
-    )
+    await message.answer_photo(photo=photo)
 
     await state.clear()
-
 
 # ================= RUN =================
 async def main():

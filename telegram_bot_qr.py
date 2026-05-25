@@ -125,7 +125,7 @@ async def generate_qr(message: Message, state: FSMContext):
     )
 
     await message.answer_photo(photo=photo)
-
+    await message.answer("🙏 شكراً لاستخدامك البوت ❤️")
     await state.clear()
 
 

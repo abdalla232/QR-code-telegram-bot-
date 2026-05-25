@@ -16,9 +16,11 @@ TOKEN = "8639399155:AAERI2N4r7LqnQCTdL7LjofZ4yM153VY9YY"
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+
 # ================= STATES =================
 class QRState(StatesGroup):
     waiting_text = State()
+
 
 # ================= QR FUNCTION =================
 def create_styled_qr(text, bot_name="QR Bot"):
@@ -40,10 +42,8 @@ def create_styled_qr(text, bot_name="QR Bot"):
     qr_size = 400
     qr_img = qr_img.resize((qr_size, qr_size))
 
-    # 🎯 نعمل canvas جديد بدل background paste
-    canvas = Image.new("RGBA", (800, 800), (20, 20, 20, 255))  # خلفية نظيفة
+    canvas = Image.new("RGBA", (800, 800), (20, 20, 20, 255))
 
-    # دمج QR
     pos = ((800 - qr_size) // 2, (800 - qr_size) // 2)
     canvas.paste(qr_img, pos, qr_img)
 
@@ -66,17 +66,21 @@ def create_styled_qr(text, bot_name="QR Bot"):
 
     bio = io.BytesIO()
     bio.name = "qr.png"
+
     canvas.save(bio, "PNG")
     bio.seek(0)
 
-    return BufferedInputFile(bio.getvalue(), filename="qr.png")
+    return BufferedInputFile(
+        bio.getvalue(),
+        filename="qr.png"
+    )
 
 
 # ================= START =================
 @dp.message(Command("start"))
 async def start(message: Message):
 
-    # زر مشاركة الرقم
+    # زر التواصل
     reply_keyboard = types.ReplyKeyboardMarkup(
         keyboard=[
             [
@@ -125,46 +129,17 @@ async def contact_handler(message: Message):
         f"Email: yourmail@gmail.com"
     )
 
-    inline_keyboard = types.InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                types.InlineKeyboardButton(
-                    text="🎯 Generate QR Code",
-                    callback_data="qr"
-                )
-            ]
-        ]
-    )
-
-    await message.answer(
-        "👋 Welcome!\nPress button to generate QR Code:",
-        reply_markup=keyboard
-    )
-
-    await message.answer(
-        "🎯 QR Menu:",
-        reply_markup=inline_keyboard
-    )
-
-
-CONTACT =================
-@dp.message(F.contact)
-async def contact_handler(message: Message):
-
-    contact = message.contact
-
-    await message.answer(
-        f"✅ Thanks {Abdullah.Dabe}!\n\n"
-        f"📩 للتواصل معي:\n"
-        f"Telegram: @Abdullah_id_en\n"
-        f"Insta: 3abdullah.id.en"
-    )
 
 # ================= BUTTON =================
 @dp.callback_query(F.data == "qr")
 async def qr_button(call: CallbackQuery, state: FSMContext):
-    await call.message.answer("✍️ Send the text or link:")
+
+    await call.message.answer(
+        "✍️ Send the text or link:"
+    )
+
     await state.set_state(QRState.waiting_text)
+
     await call.answer()
 
 
@@ -173,7 +148,9 @@ async def qr_button(call: CallbackQuery, state: FSMContext):
 async def generate_qr(message: Message, state: FSMContext):
 
     if not message.text:
-        await message.answer("❌ Please send a valid text or link")
+        await message.answer(
+            "❌ Please send a valid text or link"
+        )
         return
 
     photo = create_styled_qr(
@@ -181,11 +158,21 @@ async def generate_qr(message: Message, state: FSMContext):
         bot_name="QR Generator Bot"
     )
 
-    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-        [types.InlineKeyboardButton(text="🔁 Generate again", callback_data="qr")]
-    ])
+    keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                types.InlineKeyboardButton(
+                    text="🔁 Generate again",
+                    callback_data="qr"
+                )
+            ]
+        ]
+    )
 
-    await message.answer_photo(photo=photo, reply_markup=keyboard)
+    await message.answer_photo(
+        photo=photo,
+        reply_markup=keyboard
+    )
 
     await state.clear()
 

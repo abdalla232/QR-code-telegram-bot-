@@ -75,15 +75,53 @@ def create_styled_qr(text, bot_name="QR Bot"):
 # ================= START =================
 @dp.message(Command("start"))
 async def start(message: Message):
-    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-        [types.InlineKeyboardButton(text="🎯 Generate QR Code", callback_data="qr")]
-    ])
+
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                types.KeyboardButton(
+                    text="📞 تواصل معي",
+                    request_contact=True
+                )
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+    inline_keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                types.InlineKeyboardButton(
+                    text="🎯 Generate QR Code",
+                    callback_data="qr"
+                )
+            ]
+        ]
+    )
 
     await message.answer(
         "👋 Welcome!\nPress button to generate QR Code:",
         reply_markup=keyboard
     )
 
+    await message.answer(
+        "🎯 QR Menu:",
+        reply_markup=inline_keyboard
+    )
+
+
+CONTACT =================
+@dp.message(F.contact)
+async def contact_handler(message: Message):
+
+    contact = message.contact
+
+    await message.answer(
+        f"✅ Thanks {Abdullah.Dabe}!\n\n"
+        f"📩 للتواصل معي:\n"
+        f"Telegram: @Abdullah_id_en\n"
+        f"Insta: 3abdullah.id.en"
+    )
 
 # ================= BUTTON =================
 @dp.callback_query(F.data == "qr")

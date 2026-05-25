@@ -83,33 +83,19 @@ async def start(message: Message):
     keyboard = types.ReplyKeyboardMarkup(
         keyboard=[
             [
+                types.KeyboardButton(text="🎯 Generate QR Code")
+            ],
+            [
                 types.KeyboardButton(text="📞 Contact")
             ]
         ],
         resize_keyboard=True
     )
 
-    inline_keyboard = types.InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                types.InlineKeyboardButton(
-                    text="🎯 Generate QR Code",
-                    callback_data="qr"
-                )
-            ]
-        ]
-    )
-
     await message.answer(
-        "👋 Welcome!",
+        "👋 Welcome!\nChoose an option:",
         reply_markup=keyboard
     )
-
-    await message.answer(
-        "Press button to generate QR Code:",
-        reply_markup=inline_keyboard
-    )
-
 
 # ================= CONTACT =================
 @dp.message(F.text == "📞 Contact")
@@ -122,18 +108,6 @@ async def contact_info(message: Message):
         "Phone: +963968713548"
     )
 
-
-# ================= BUTTON =================
-@dp.callback_query(F.data == "qr")
-async def qr_button(call: CallbackQuery, state: FSMContext):
-
-    await call.message.answer(
-        "✍️ Send the text or link:"
-    )
-
-    await state.set_state(QRState.waiting_text)
-
-    await call.answer()
 
 
 # ================= GENERATE QR =================

@@ -22,7 +22,7 @@ class QRState(StatesGroup):
 
 # ================= QR FUNCTION =================
 def create_styled_qr(text, bot_name="QR Bot"):
-    # 1. QR Code
+
     qr = qrcode.QRCode(
         error_correction=qrcode.constants.ERROR_CORRECT_H,
         box_size=10,
@@ -32,21 +32,22 @@ def create_styled_qr(text, bot_name="QR Bot"):
     qr.add_data(text)
     qr.make(fit=True)
 
-    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
+    qr_img = qr.make_image(
+        fill_color="black",
+        back_color="white"
+    ).convert("RGBA")
 
-    # 2. Background
-    bg = Image.open("background.jpg").convert("RGBA").resize((800, 800))
-
-    # 3. Resize QR
     qr_size = 400
     qr_img = qr_img.resize((qr_size, qr_size))
 
-    # 4. Center QR
-    pos = ((800 - qr_size) // 2, (800 - qr_size) // 2)
-    bg.paste(qr_img, pos, qr_img)
+    # 🎯 نعمل canvas جديد بدل background paste
+    canvas = Image.new("RGBA", (800, 800), (20, 20, 20, 255))  # خلفية نظيفة
 
-    # 5. Draw text
-    draw = ImageDraw.Draw(bg)
+    # دمج QR
+    pos = ((800 - qr_size) // 2, (800 - qr_size) // 2)
+    canvas.paste(qr_img, pos, qr_img)
+
+    draw = ImageDraw.Draw(canvas)
 
     try:
         font = ImageFont.truetype("arial.ttf", 40)
@@ -59,14 +60,13 @@ def create_styled_qr(text, bot_name="QR Bot"):
     draw.text(
         ((800 - text_width) // 2, 50),
         bot_name,
-        fill="white",
+        fill=(255, 255, 255, 255),
         font=font
     )
 
-    # 6. Save to memory
     bio = io.BytesIO()
     bio.name = "qr.png"
-    bg.save(bio, "PNG")
+    canvas.save(bio, "PNG")
     bio.seek(0)
 
     return BufferedInputFile(bio.getvalue(), filename="qr.png")

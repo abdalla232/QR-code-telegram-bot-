@@ -2,18 +2,18 @@ import asyncio
 import io
 import qrcode
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BufferedInputFile
 
-TOKEN = "8639399155:AAERI2N4r7LqnQCTdL7LjofZ4yM153VY9YY"
+TOKEN = ""
 
-bot = Bot(token=TOKEN)
+bot = Bot(8639399155:AAERI2N4r7LqnQCTdL7LjofZ4yM153VY9YY)
 dp = Dispatcher()
 
 
@@ -22,8 +22,64 @@ class QRState(StatesGroup):
     waiting_text = State()
 
 
-# ================= QR FUNCTION =================
-def create_styled_qr(text, bot_name="QR Bot"):
+# ================= START =================
+@dp.message(Command("start"))
+async def start(message: Message):
+
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+        [types.InlineKeyboardButton(text="🎯 Generate QR Code", callback_data="qr")]
+    ])
+
+    await message.answer(
+        "👋 Welcome!\nPress button to generate QR Code:",
+        reply_markup=keyboard
+    )
+
+
+# ================= STYLE MENU =================
+@dp.callback_query(F.data == "qr")
+async def qr_button(call: CallbackQuery, state: FSMContext):
+
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+        [types.InlineKeyboardButton(text="⚫ Classic", callback_data="style_classic")],
+        [types.InlineKeyboardButton(text="🌑 Dark", callback_data="style_dark")],
+        [types.InlineKeyboardButton(text="💎 Premium Glow", callback_data="style_premium")]
+    ])
+
+    await call.message.answer("🎨 Choose QR style:", reply_markup=keyboard)
+    await call.answer()
+
+
+# ================= SAVE STYLE =================
+@dp.callback_query(F.data.startswith("style_"))
+async def choose_style(call: CallbackQuery, state: FSMContext):
+
+    style = call.data.replace("style_", "")
+
+    await state.update_data(style=style)
+
+    await call.message.answer("✍️ Send text or link:")
+    await state.set_state(QRState.waiting_text)
+
+    await call.answer()
+
+
+# ================= GET TEXT =================
+@dp.message(QRState.waiting_text)
+async def get_text(message: Message, state: FSMContext):
+
+    data = await state.get_data()
+    style = data.get("style", "classic")
+
+    photo = create_qr(message.text, style)
+
+    await message.answer_photo(photo=photo)
+
+    await state.clear()
+
+
+# ================= QR GENERATOR =================
+def create_qr(text, style="classic"):
 
     qr = qrcode.QRCode(
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -39,94 +95,62 @@ def create_styled_qr(text, bot_name="QR Bot"):
         back_color="white"
     ).convert("RGBA")
 
-    qr_size = 400
-    qr_img = qr_img.resize((qr_size, qr_size))
+    qr_img = qr_img.resize((400, 400))
 
-    canvas = Image.new("RGBA", (800, 800), (20, 20, 20, 255))
+    canvas = Image.new("RGBA", (800, 800))
+    pos = ((800 - 400) // 2, (800 - 400) // 2)
 
-    pos = ((800 - qr_size) // 2, (800 - qr_size) // 2)
-    canvas.paste(qr_img, pos, qr_img)
 
-    draw = ImageDraw.Draw(canvas)
+    # ================= CLASSIC =================
+    if style == "classic":
+        canvas = Image.new("RGBA", (800, 800), (255, 255, 255, 255))
+        canvas.paste(qr_img, pos, qr_img)
 
-    try:
-        font = ImageFont.truetype("arial.ttf", 40)
-    except:
-        font = ImageFont.load_default()
 
-    bbox = draw.textbbox((0, 0), bot_name, font=font)
-    text_width = bbox[2] - bbox[0]
+    # ================= DARK =================
+    elif style == "dark":
+        canvas = Image.new("RGBA", (800, 800), (20, 20, 20, 255))
+        canvas.paste(qr_img, pos, qr_img)
 
-    draw.text(
-        ((800 - text_width) // 2, 50),
-        bot_name,
-        fill=(255, 255, 255, 255),
-        font=font
-    )
 
+    # ================= PREMIUM GLOW =================
+    elif style == "premium":
+
+        canvas = Image.new("RGBA", (800, 800), (10, 10, 25, 255))
+
+        base = Image.new("RGBA", (800, 800), (0, 0, 0, 0))
+        base.paste(qr_img, pos, qr_img)
+
+        # 🔥 Glow layers (قوي)
+        glow1 = base.copy().filter(ImageFilter.GaussianBlur(8))
+        glow2 = base.copy().filter(ImageFilter.GaussianBlur(16))
+        glow3 = base.copy().filter(ImageFilter.GaussianBlur(25))
+
+        canvas = Image.alpha_composite(canvas, glow3)
+        canvas = Image.alpha_composite(canvas, glow2)
+        canvas = Image.alpha_composite(canvas, glow1)
+
+        # QR الحاد فوق الغلو
+        canvas = Image.alpha_composite(canvas, base)
+
+        # ✨ نص بسيط
+        draw = ImageDraw.Draw(canvas)
+
+        try:
+            font = ImageFont.truetype("arial.ttf", 40)
+        except:
+            font = ImageFont.load_default()
+
+        draw.text((20, 20), "QR PREMIUM", fill=(255, 255, 255, 200), font=font)
+
+
+    # ================= SAVE =================
     bio = io.BytesIO()
     bio.name = "qr.png"
-
     canvas.save(bio, "PNG")
     bio.seek(0)
 
     return BufferedInputFile(bio.getvalue(), filename="qr.png")
-
-
-# ================= START =================
-@dp.message(Command("start"))
-async def start(message: Message):
-
-    keyboard = types.ReplyKeyboardMarkup(
-        keyboard=[
-            [types.KeyboardButton(text="🎯 Generate QR Code")],
-            [types.KeyboardButton(text="📞 Contact")]
-        ],
-        resize_keyboard=True
-    )
-
-    await message.answer(
-        "👋 Welcome!\nChoose an option:",
-        reply_markup=keyboard
-    )
-
-
-# ================= CONTACT =================
-@dp.message(F.text == "📞 Contact")
-async def contact_info(message: Message):
-
-    await message.answer(
-        "📞 Contact Information\n\n"
-        "Telegram: @Abdullah_id_en\n"
-        "Insta: 3bdullah.id.en\n"
-        "Phone: +963968713548"
-    )
-
-
-# ================= QR BUTTON =================
-@dp.message(F.text == "🎯 Generate QR Code")
-async def qr_button(message: Message, state: FSMContext):
-
-    await message.answer("✍️ Send the text or link:")
-    await state.set_state(QRState.waiting_text)
-
-
-# ================= GENERATE QR =================
-@dp.message(QRState.waiting_text)
-async def generate_qr(message: Message, state: FSMContext):
-
-    if not message.text:
-        await message.answer("❌ Send text only")
-        return
-
-    photo = create_styled_qr(
-        text=message.text,
-        bot_name="QR Bot"
-    )
-
-    await message.answer_photo(photo=photo)
-    await message.answer("🙏 شكراً لاستخدامك البوت ❤️")
-    await state.clear()
 
 
 # ================= RUN =================

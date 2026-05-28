@@ -11,9 +11,9 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BufferedInputFile
 
-TOKEN = ""
+TOKEN = "8639399155:AAERI2N4r7LqnQCTdL7LjofZ4yM153VY9YY"
 
-bot = Bot(8639399155:AAERI2N4r7LqnQCTdL7LjofZ4yM153VY9YY)
+bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 
